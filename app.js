@@ -499,3 +499,42 @@ document.getElementById('manual-off-btn').addEventListener('click', async () => 
         alert("Connect to the device before attempting to turn it off.");
     }
 });
+
+// --- EXPORT TO HIGH-RES PNG FUNCTION ---
+// Forces a 4x native resolution render and a crisp white background for IEEE paper compliance
+window.downloadChart = function(chartInstance, filename) {
+    // 1. Save original pixel ratio
+    const originalRatio = chartInstance.options.devicePixelRatio || window.devicePixelRatio;
+    
+    // 2. Force Chart.js to render at 4x resolution (High-Def)
+    chartInstance.options.devicePixelRatio = 4;
+    chartInstance.resize(); 
+    chartInstance.update('none'); // Re-render synchronously without animation
+
+    // 3. Create a temporary canvas at the new massive resolution
+    const canvas = chartInstance.canvas;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const ctx = tempCanvas.getContext('2d');
+
+    // 4. Fill with solid white for IEEE print standards
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // 5. Draw the crisp, high-res chart over the white background
+    ctx.drawImage(canvas, 0, 0);
+
+    // 6. Trigger the download
+    const link = document.createElement('a');
+    link.download = filename + '_HighRes.png';
+    link.href = tempCanvas.toDataURL('image/png', 1.0);
+    link.click();
+
+    // 7. Revert the chart back to normal screen resolution so it doesn't lag the dashboard
+    chartInstance.options.devicePixelRatio = originalRatio;
+    chartInstance.resize();
+    chartInstance.update('none');
+    
+    console.log(`Exported high-resolution ${filename}.png successfully.`);
+};
